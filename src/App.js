@@ -1,26 +1,72 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from 'react'
+import { Link } from '@reach/router'
+import { MdArrowDownward } from 'react-icons/md'
+import useApp from './useApp'
+import FileUploader from './FileUploader'
+import FileUploaderScreen from './FileUploaderScreen'
+import FileRow from './FileRow'
+import SVGScaleLoop from './SVGScaleLoop'
+import './styles.css'
 
-function App() {
+const App = ({ children }) => {
+  const inputRef = React.createRef()
+  const {
+    files,
+    pending,
+    next,
+    uploading,
+    uploaded,
+    uploadError,
+    status,
+    onSubmit,
+    onChange,
+    triggerInput,
+    getFileUploaderProps,
+  } = useApp({ inputRef })
+
+  const initialFileUploaderProps = getFileUploaderProps({
+    triggerInput: status === 'IDLE' ? triggerInput : undefined,
+    onChange: status === 'IDLE' ? onChange : undefined,
+  })
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    <form className='form' onSubmit={onSubmit}>
+      <div className='uploader'>
+        <FileUploader {...initialFileUploaderProps}>
+          <FileUploaderScreen
+            triggerInput={triggerInput}
+            getFileUploaderProps={getFileUploaderProps}
+            files={files}
+            pending={pending}
+            status={status}
+            uploadError={uploadError}
+          />
+        </FileUploader>
+      </div>
+      <div className={files.length ? 'file-list' : ''}>
+        {files.map(({ id, ...rest }, index) => (
+          <FileRow
+            key={`thumb${index}`}
+            isUploaded={!!uploaded[id]}
+            isUploading={next && next.id === id}
+            id={id}
+            {...rest}
+          />
+        ))}
+      </div>
+      {status === 'FILES_UPLOADED' && (
+        <div className='next-step'>
+          <SVGScaleLoop>
+            <MdArrowDownward className='arrow-down' />
+          </SVGScaleLoop>
+          <Link to='/review'>
+            <button type='button'>Next Page</button>
+          </Link>
+        </div>
+      )}
+      {children}
+    </form>
+  )
 }
 
-export default App;
+export default App
